@@ -4,6 +4,7 @@ from tables import *
 from path import path
 import sys
 from subprocess import call, check_output
+import re
 
 from . import find_command
 
@@ -31,6 +32,18 @@ class HDF5File(object):
         self._copy_new_data(fp, filepath)
         fp.close()
         self.master_leaves = self.get_leaves()
+
+    def convert_unnatural_names(self):
+        unnatural_name = r'[^0-9A-Za-z_]'
+        for node in self.master.walkNodes():
+            name = path(node._v_pathname).name
+            if not name:
+                continue
+            natural = re.sub(r'[^0-9A-Za-z_]', '_', name)
+            if re.match(r'[0-9]', natural[0]):
+                natural = '_' + natural
+            if natural != name:        
+                self.master.renameNode(node, natural)
         
     def _append_data(self, h5f_input):
         # For nodes that already exist in the master, append data
