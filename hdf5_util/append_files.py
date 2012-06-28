@@ -46,13 +46,24 @@ class HDF5File(object):
                 self.master.renameNode(node, natural)
         
     def _append_data(self, h5f_input):
+        # TODO Add check for id_ and id_ end to keep them up to date.
         # For nodes that already exist in the master, append data
         for atable in [x for x in h5f_input.walkNodes() if isinstance(x, Leaf)]:
             leaf = atable._v_pathname
             if leaf in self.master_leaves:
                 mtable = self.master.getNode(leaf)
                 if isinstance(atable, Table):
-                    mtable.append(atable[:])
+                    for row in atable:
+                        mtable.append([[row.fetch_all_fields()]])
+                        row = mtable[-1]
+                        if 'id_' in atable.colnames:
+                            prev_id = mtable[-2]['id_']
+                            if 'id_len' in atable.colnames:
+                                row['id_'] = prev_id + mtable[-2]['id_len']
+                            else:
+                                row['id_'] = 1 + prev_id
+                            mtable[-1]=[row] # just part of the mystery 
+                                             # of the hdf5 library
                 else:
                     # must be an Array.
                     for row in atable:
