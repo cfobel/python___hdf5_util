@@ -61,7 +61,7 @@ class HDF5File(object):
                             if 'id_len' in atable.colnames:
                                 row['id_'] = prev_id + mtable[-2]['id_len']
                             else:
-                                row['id_'] = 1 + prev_id
+                                row['id_'] = 1 + prev_id + row['id_']
                             mtable[-1]=[row] # just part of the mystery 
                                              # of the hdf5 library
                 else:
