@@ -62,7 +62,11 @@ class HDF5File(object):
                                 row['id_'] = prev_id + mtable[-2]['id_len']
                             else:
                                 # offset the first index.
-                                row['id_'] = prev_id + row['id_'] + 1 if i == 0 else 0
+                                if i == 0:
+                                    row['id_'] = prev_id + row['id_'] + 1
+                                else:
+                                    row['id_'] = prev_id + row['id_']
+                                    
                             mtable[-1]=[row] # just part of the mystery 
                                              # of the hdf5 library
                 else:
