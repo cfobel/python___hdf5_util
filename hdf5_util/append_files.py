@@ -53,7 +53,7 @@ class HDF5File(object):
             if leaf in self.master_leaves:
                 mtable = self.master.getNode(leaf)
                 if isinstance(atable, Table):
-                    for row in atable:
+                    for i, row in enumerate(atable):
                         mtable.append([[row.fetch_all_fields()]])
                         row = mtable[-1]
                         if 'id_' in atable.colnames:
@@ -61,7 +61,8 @@ class HDF5File(object):
                             if 'id_len' in atable.colnames:
                                 row['id_'] = prev_id + mtable[-2]['id_len']
                             else:
-                                row['id_'] = 1 + prev_id + row['id_']
+                                # offset the first index.
+                                row['id_'] = prev_id + row['id_'] + 1 if i == 0 else 0
                             mtable[-1]=[row] # just part of the mystery 
                                              # of the hdf5 library
                 else:
