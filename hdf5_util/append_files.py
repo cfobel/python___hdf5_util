@@ -70,7 +70,6 @@ def _create_subtree(hdf5, parent, node, force_natural=True):
             else:
                 get_create(hdf5, type_)(parent, name(node[0], force_natural), node[2])
 
-
 class HDF5File(object):
     script = find_command('ptrepack')
 
