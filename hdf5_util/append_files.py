@@ -85,6 +85,9 @@ class HDF5File(object):
         self.master_leaves = self.get_leaves()
         self.master_nodes = self.get_nodes()
 
+    def get_subtree(self, path):
+        return HDF5SubTree(self.master, self.master.getNode(path))
+
     def get_leaf(self, name):
         for leaf in self.master_leaves:
             if path(leaf).namebase == name:
@@ -170,3 +173,16 @@ class HDF5File(object):
                         for n in self.master.walkNodes(name)])
     def __del__(self):
         self.master.close()
+
+
+class HDF5SubTree(object):
+    def __init__(self, master, root):
+        self.master = master
+        self.root = root
+
+    def get_leaf_paths(self):
+        leaves = set([x._v_pathname for x in self.master.walkNodes(self.root) if isinstance(x, Leaf)])
+        return set(map(lambda p: path(self.root._v_pathname).relpathto(p), leaves))
+
+    def get_node(self, p):
+        return self.master.getNode(path(self.root._v_pathname)/p)
