@@ -79,9 +79,9 @@ class HDF5File(object):
         HDF5File._createTree(filepath, tree).close()
         return HDF5File(filepath)
 
-    def __init__(self, filepath):
+    def __init__(self, filepath, mode='a'):
         self.filepath = filepath
-        self.master = openFile(filepath, 'a')
+        self.master = openFile(filepath, mode)
         self.master_leaves = self.get_leaves()
         self.master_nodes = self.get_nodes()
 
@@ -114,6 +114,10 @@ class HDF5File(object):
         self._copy_new_data(fp, filepath)
         fp.close()
         self.master_leaves = self.get_leaves()
+
+    def common_subpaths(self, roots):
+        subtrees = [set(self.get_subtree(root).get_leaf_paths()) for root in roots]
+        return reduce(lambda x, y: x.intersection(y), subtrees)
 
     def convert_unnatural_names(self):
         unnatural_name = r'[^0-9A-Za-z_]'

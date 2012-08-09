@@ -10,6 +10,7 @@ from path import path
     the attributes of the Table class have to be specified during it's definition.
     we could only manage this with a string dynamically created.
 """
+
 def T(**kwargs):
     attrs = '\n'.join(['    %s = %s' % (name, repr(_type)) for name, _type in kwargs.items()])
     class_str = '''\
@@ -18,7 +19,6 @@ class Table(IsDescription):
     ''' % (attrs)
     exec(class_str)
     return eval('Table')
-
 
 
 def hdf5_createTree(file_path, structure):
@@ -46,19 +46,24 @@ def get_create(hdf5, hdf5_type):
 
 
 def _create_subtree(hdf5, parent, node):
-    if isinstance(node[1], tuple):
+    type_ = hdf5_type(node[1])
+    if type_:
+        if type_ == IsDescription:
+            get_create(hdf5, type_)(parent, node[0], node[1])
+        else:
+            get_create(hdf5, type_)(parent, node[0], node[2])
+    elif isinstance(node[1], str):
+        if len(node) > 2:
+            new_parent = hdf5.createGroup(parent, node[0], title=node[1])
+            for child in node[2:]:
+                _create_subtree(hdf5, new_parent, child)
+        else:
+            parent._v_attrs[node[0]] = node[1]
+    elif isinstance(node[1], tuple):
         new_parent = hdf5.createGroup(parent, node[0])
         for child in node[1:]:
             _create_subtree(hdf5, new_parent, child)
-    else:
-        type_ = hdf5_type(node[1])
-        if not type_:
-            parent._v_attrs[node[0]] = node[1]
-        else:
-            if type_ == IsDescription:
-                get_create(hdf5, type_)(parent, node[0], node[1])
-            else:
-                get_create(hdf5, type_)(parent, node[0], node[2])
+
 
 def get_node(hdf5, **args):
     return _traverse(hdf5.root, args)
@@ -75,10 +80,11 @@ def main(net=path('tseng.net'), algo='BestOverallXover', pop_size=256, tournamen
 
     h = hdf5_createTree(filename,
             (net_nat, ('_value', np.str(net.namebase)),
-                (algo,
+                (algo, 'The algorithm',
                     ('pop_size_%d' % pop_size, ('_value', pop_size),
                         ('tournament_size_%d' % tournament_size, ('_value', np.int32(tournament_size)),
-                            ('params', T(netlist=StringCol(32),
+                            ('params', 'These Are Parameters',
+                                    T(netlist=StringCol(32),
                                     arch=StringCol(32),
                                     pop_size=UInt32Col(),
                                     tournament_size=UInt32Col(),
@@ -97,10 +103,6 @@ def main(net=path('tseng.net'), algo='BestOverallXover', pop_size=256, tournamen
                         )))))
 
     tournament = (h, net_nat, algo, 'pop_size_%d' % pop_size, 'tournament_size_%d' % tournament_size)
-    results = get_node(tournament, 'results')
-    grids = get_node(tournament, 'grids')
-    costs = get_node(tournament, 'costs')
-
     return h
 
 if __name__ == "__main__":
