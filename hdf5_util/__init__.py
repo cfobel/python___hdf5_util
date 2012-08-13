@@ -2,8 +2,9 @@ from subprocess import check_output, CalledProcessError
 
 from path import path
 import tables
-
+from .tree import *
 from .append_files import HDF5File, T, HDF5SubTree
+
 
 def getNodeProper(self, where, *args, **kwargs):
     '''
